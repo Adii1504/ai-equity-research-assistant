@@ -1,0 +1,4 @@
+# Web server dependencies (includes all core app deps)
+-r requirements.txt
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0

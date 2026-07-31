@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Equity Research Assistant</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-inner">
+        <h1>📊 AI Equity Research Assistant</h1>
+        <p class="subtitle">
+          Automated equity research — fundamentals, news sentiment, and LLM analysis.
+          Enter one or more tickers to generate a research note.
+        </p>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="search-panel">
+        <div class="search-row">
+          <input
+            id="tickerInput"
+            type="text"
+            placeholder="AAPL, MSFT, TCS.NS — separate multiple with commas"
+            autocomplete="off"
+          />
+          <button id="analyseBtn" type="button">Analyse →</button>
+        </div>
+        <p class="examples">
+          Examples: <span>AAPL · TSLA · MSFT · TCS.NS · RELIANCE.NS · INFY.NS</span>
+        </p>
+      </section>
+
+      <div id="status" class="status hidden"></div>
+      <div id="results" class="results"></div>
+    </main>
+
+    <footer class="footer">
+      <p>For research and demo purposes only — not financial advice.</p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

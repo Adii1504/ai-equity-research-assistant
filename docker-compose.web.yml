@@ -1,0 +1,36 @@
+version: "3.9"
+
+# Web application stack — FastAPI + browser UI
+# Run: docker compose -f docker-compose.web.yml up --build
+# Open: http://localhost:8080
+
+services:
+
+  redis:
+    image: redis:7-alpine
+    container_name: research_redis_web
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: research_web
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped

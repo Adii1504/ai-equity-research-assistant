@@ -1,0 +1,13 @@
+{
+  "name": "aifinancecla",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Equity Research Assistant — Python backend with browser UI",
+  "scripts": {
+    "setup": "pip install -r requirements-web.txt",
+    "predev": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')){console.error('\\nMissing .env — copy .env.example to .env and set GROQ_API_KEY\\n'); process.exit(1)}\"",
+    "dev": "python -m uvicorn web.server:app --host 0.0.0.0 --port 8080 --reload",
+    "dev:streamlit": "python -m streamlit run main.py",
+    "start": "npm run dev"
+  }
+}
