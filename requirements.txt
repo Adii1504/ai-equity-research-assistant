@@ -8,3 +8,10 @@ transformers>=4.40.0
 torch>=2.2.0
 feedparser>=6.0.11
 pandas>=2.0.0
+
+# — Database / Auth (added for login, signup, recommendations) ————————
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.9
+passlib[bcrypt]>=1.7.4
+pyjwt>=2.8.0
+email-validator>=2.1.0

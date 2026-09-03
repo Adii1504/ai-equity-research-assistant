@@ -18,6 +18,24 @@ services:
       timeout: 5s
       retries: 3
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: financecla_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Adiasmi@1529
+      - POSTGRES_DB=financecla
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    volumes:
+      - financecla_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   web:
     build:
       context: .
@@ -28,9 +46,15 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DATABASE_URL=postgresql://postgres:Adiasmi%401529@postgres:5432/financecla
     env_file:
       - .env
     depends_on:
       redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  financecla_pgdata:

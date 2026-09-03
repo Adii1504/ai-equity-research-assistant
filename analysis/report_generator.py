@@ -1,22 +1,4 @@
-"""
-analysis/report_generator.py
------------------------------
-Combines stock data + news + sentiment into a structured LLM-generated report.
 
-ADR: Why Groq over OpenAI?
-  - Groq API is free tier with llama3-70b — zero cost during development
-  - Inference speed: 500+ tokens/sec vs ~50 for OpenAI — matters for UX
-  - API is OpenAI-compatible — swapping to OpenAI later is one line change
-  - Keeps costs at zero for a student project running publicly
-
-ADR: Why a structured prompt over a free-form one?
-  - Forces LLM to return consistent sections (Summary, Risks, Positives, Outlook)
-  - Easier to parse and display in Streamlit
-  - Reduces hallucination by grounding in specific provided data
-
-Input:  StockData + NewsData + SentimentResult
-Output: ResearchReport with llm_ fields populated
-"""
 
 import json
 import re

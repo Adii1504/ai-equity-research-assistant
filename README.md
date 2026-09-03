@@ -51,7 +51,7 @@ Engineering decisions (caching, FinBERT vs VADER, Groq, concurrency, graceful de
 | Market data | yfinance |
 | News | yfinance, NewsAPI (optional) |
 | Sentiment | Hugging Face Transformers (FinBERT) |
-| LLM | Groq API (llama3-70b-8192) |
+| LLM | Groq API (llama-3.3-70b-versatile) |
 | Cache | Redis |
 | Container | Docker + Docker Compose |
 
