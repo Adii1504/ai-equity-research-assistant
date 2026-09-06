@@ -23,7 +23,7 @@ services:
     container_name: financecla_db
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Adiasmi@1529
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=financecla
     ports:
       - "5432:5432"
@@ -46,7 +46,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - DATABASE_URL=postgresql://postgres:Adiasmi%401529@postgres:5432/financecla
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/financecla
     env_file:
       - .env
     depends_on:

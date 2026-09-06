@@ -1,20 +1,23 @@
-
+"""
+analysis/report_generator.py
+----------------------------
+Structured LLM equity research note generator using Groq API.
+"""
 
 import json
 import re
-from typing import Optional
-
+from typing import Optional, Tuple
 from groq import Groq
 
-from models.stock_model import StockData, NewsData, SentimentResult, ResearchReport
-from utils.timer import Timer
-from utils.logger import get_logger
 from config import GROQ_API_KEY, GROQ_MODEL, LLM_MAX_TOKENS, LLM_TEMPERATURE
+from models import StockData, NewsData, SentimentResult
+from utils import Timer, get_logger
 
 logger = get_logger(__name__)
 
 
 def _format_market_cap(val: Optional[float]) -> str:
+    """Format market cap numbers into human-readable strings."""
     if val is None:
         return "N/A"
     if val >= 1e12:
@@ -35,11 +38,13 @@ def _build_prompt(
     Build a structured, data-grounded prompt.
     Grounding the LLM in specific numbers reduces hallucination significantly.
     """
-    lines = ["You are a professional equity research analyst. Using ONLY the data provided below, generate a concise research note."]
-    lines.append("Respond ONLY in this exact JSON format:\n")
-    lines.append('{"summary": "...", "risks": "...", "positives": "...", "outlook": "..."}')
-    lines.append("\nEach section should be 2-3 sentences. Be specific — reference the actual numbers provided.\n")
-    lines.append("--- DATA ---")
+    lines = [
+        "You are a professional equity research analyst. Using ONLY the data provided below, generate a concise research note.",
+        "Respond ONLY in this exact JSON format:\n",
+        '{"summary": "...", "risks": "...", "positives": "...", "outlook": "..."}',
+        "\nEach section should be 2-3 sentences. Be specific — reference the actual numbers provided.\n",
+        "--- DATA ---",
+    ]
 
     if stock:
         lines.append(f"\nCOMPANY: {stock.company_name} ({stock.symbol})")
@@ -52,7 +57,9 @@ def _build_prompt(
 
     if sentiment:
         lines.append(f"\nNEWS SENTIMENT: {sentiment.overall_label.upper()} (confidence: {sentiment.overall_score:.2f})")
-        lines.append(f"POSITIVE articles: {sentiment.positive_count} | NEUTRAL: {sentiment.neutral_count} | NEGATIVE: {sentiment.negative_count}")
+        lines.append(
+            f"POSITIVE articles: {sentiment.positive_count} | NEUTRAL: {sentiment.neutral_count} | NEGATIVE: {sentiment.negative_count}"
+        )
 
     if news and news.articles:
         lines.append("\nTOP HEADLINES:")
@@ -67,20 +74,14 @@ def _build_prompt(
 
 
 def _parse_llm_response(text: str) -> dict:
-    """
-    Extract JSON from LLM response even if there's surrounding text.
-    LLMs sometimes wrap JSON in markdown code blocks — handle that.
-    """
-    # Strip markdown code fences
+    """Extract JSON from LLM response even if wrapped in markdown code blocks."""
     text = re.sub(r"```(?:json)?", "", text).strip()
 
-    # Try direct parse first
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # Extract first {...} block
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         try:
@@ -88,13 +89,12 @@ def _parse_llm_response(text: str) -> dict:
         except json.JSONDecodeError:
             pass
 
-    # Return raw text as summary if all parsing fails
     logger.warning("Could not parse LLM JSON response — using raw text as summary")
     return {
-        "summary":   text[:500],
-        "risks":     "Analysis unavailable",
+        "summary": text[:500],
+        "risks": "Analysis unavailable",
         "positives": "Analysis unavailable",
-        "outlook":   "Analysis unavailable",
+        "outlook": "Analysis unavailable",
     }
 
 
@@ -102,49 +102,74 @@ def generate_report(
     stock: Optional[StockData],
     news: Optional[NewsData],
     sentiment: Optional[SentimentResult],
-) -> tuple[Optional[str], Optional[str], Optional[str], Optional[str], float]:
+) -> Tuple[Optional[str], Optional[str], Optional[str], Optional[str], float]:
     """
     Call Groq LLM with structured prompt and return parsed sections.
 
     Returns:
         Tuple of (summary, risks, positives, outlook, elapsed_ms)
-        Any section can be None if generation fails.
     """
     if not GROQ_API_KEY:
         logger.error("GROQ_API_KEY not set in .env — skipping LLM report generation")
         return (
             "LLM report unavailable — add GROQ_API_KEY to .env",
-            None, None, None, 0.0
+            None,
+            None,
+            None,
+            0.0,
         )
 
     prompt = _build_prompt(stock, news, sentiment)
-    logger.info("Calling Groq LLM (%s) for report generation", GROQ_MODEL)
 
+    candidate_models = [
+        GROQ_MODEL,
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "groq/compound-mini",
+        "openai/gpt-oss-20b",
+        "qwen/qwen3.6-27b",
+    ]
+    models_to_try = list(dict.fromkeys([m for m in candidate_models if m]))
+
+    parsed_report = None
     with Timer("llm_report_generation") as t:
-        try:
-            client   = Groq(api_key=GROQ_API_KEY)
-            response = client.chat.completions.create(
-                model       = GROQ_MODEL,
-                messages    = [{"role": "user", "content": prompt}],
-                max_tokens  = LLM_MAX_TOKENS,
-                temperature = LLM_TEMPERATURE,
-            )
-            raw_text = response.choices[0].message.content
-            parsed   = _parse_llm_response(raw_text)
+        client = Groq(api_key=GROQ_API_KEY)
+        last_error = None
 
-            logger.info("LLM report generated in %.1f ms", t.elapsed_ms)
+        for model_name in models_to_try:
+            try:
+                logger.info("Calling Groq LLM (%s) for report generation", model_name)
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=LLM_MAX_TOKENS,
+                    temperature=LLM_TEMPERATURE,
+                )
+                raw_text = response.choices[0].message.content or ""
+                parsed_report = _parse_llm_response(raw_text)
 
-            return (
-                parsed.get("summary"),
-                parsed.get("risks"),
-                parsed.get("positives"),
-                parsed.get("outlook"),
-                t.elapsed_ms,
-            )
+                logger.info("LLM report generated with %s", model_name)
+                break
 
-        except Exception as e:
-            logger.error("LLM report generation failed: %s", str(e))
-            return (
-                f"Report generation failed: {str(e)}",
-                None, None, None, t.elapsed_ms
-            )
+            except Exception as e:
+                last_error = e
+                logger.warning("Groq model %s failed: %s — trying next candidate", model_name, str(e))
+                continue
+
+    if parsed_report:
+        return (
+            parsed_report.get("summary"),
+            parsed_report.get("risks"),
+            parsed_report.get("positives"),
+            parsed_report.get("outlook"),
+            t.elapsed_ms,
+        )
+
+    logger.error("All LLM candidate models failed. Last error: %s", str(last_error))
+    return (
+        f"Report generation failed: {str(last_error)}",
+        None,
+        None,
+        None,
+        t.elapsed_ms,
+    )

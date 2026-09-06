@@ -7,20 +7,15 @@ Responsibilities:
   - Connect to Yahoo Finance
   - Retrieve and validate stock metrics
   - Return typed StockData object
-  - Cache results to avoid redundant API calls
-
-Input:  ticker symbol (str)
-Output: StockData dataclass
+  - Cache results in Redis/RAM to avoid redundant API calls
 """
 
-import yfinance as yf
 from typing import Optional
+import yfinance as yf
 
-from models.stock_model import StockData
-from utils.cache import cache
-from utils.timer import Timer
-from utils.logger import get_logger
 from config import CACHE_TTL_STOCK
+from models import StockData
+from utils import cache, Timer, get_logger
 
 logger = get_logger(__name__)
 
@@ -36,6 +31,7 @@ def _safe_float(val) -> Optional[float]:
 
 
 def _safe_int(val) -> Optional[int]:
+    """Convert yfinance volume/count values to integer."""
     try:
         return int(val) if val is not None else None
     except (TypeError, ValueError):
@@ -45,14 +41,13 @@ def _safe_int(val) -> Optional[int]:
 def fetch_stock_data(symbol: str) -> StockData:
     """
     Fetch stock fundamentals for the given ticker.
-    Checks Redis cache first — only calls yfinance on a cache miss.
+    Checks cache first — only calls yfinance on a cache miss.
 
     Args:
         symbol: Ticker symbol e.g. "AAPL", "TCS.NS", "RELIANCE.NS"
 
     Returns:
-        StockData with available fields populated.
-        Never raises — returns partial data on failure.
+        StockData with available fields populated. Never raises.
     """
     symbol = symbol.upper().strip()
     cache_key = f"{CACHE_PREFIX}{symbol}"
@@ -64,9 +59,7 @@ def fetch_stock_data(symbol: str) -> StockData:
             data = StockData.from_json(cached)
             data.from_cache = True
             remaining = cache.ttl(cache_key)
-            logger.info(
-                "Cache HIT for %s — %d seconds remaining", symbol, remaining
-            )
+            logger.info("Cache HIT for %s — %d seconds remaining", symbol, remaining)
             return data
         except Exception as e:
             logger.warning("Failed to deserialise cached stock data: %s", str(e))
@@ -77,38 +70,38 @@ def fetch_stock_data(symbol: str) -> StockData:
     with Timer(f"stock_fetch_{symbol}") as t:
         try:
             ticker = yf.Ticker(symbol)
-            info   = ticker.info
+            info = ticker.info or {}
 
-            # price change calculation
-            current  = _safe_float(info.get("currentPrice") or info.get("regularMarketPrice"))
+            # Price change calculation
+            current = _safe_float(info.get("currentPrice") or info.get("regularMarketPrice"))
             previous = _safe_float(info.get("previousClose") or info.get("regularMarketPreviousClose"))
-            change     = round(current - previous, 4) if current and previous else None
-            change_pct = round((change / previous) * 100, 2) if change and previous else None
+            change = round(current - previous, 4) if (current is not None and previous is not None) else None
+            change_pct = round((change / previous) * 100, 2) if (change is not None and previous) else None
 
             data = StockData(
-                symbol           = symbol,
-                company_name     = info.get("longName") or info.get("shortName") or symbol,
-                current_price    = current,
-                previous_close   = previous,
-                price_change     = change,
-                price_change_pct = change_pct,
-                market_cap       = _safe_float(info.get("marketCap")),
-                pe_ratio         = _safe_float(info.get("trailingPE") or info.get("forwardPE")),
-                volume           = _safe_int(info.get("volume") or info.get("regularMarketVolume")),
-                week_52_high     = _safe_float(info.get("fiftyTwoWeekHigh")),
-                week_52_low      = _safe_float(info.get("fiftyTwoWeekLow")),
-                sector           = info.get("sector"),
-                industry         = info.get("industry"),
-                from_cache       = False,
+                symbol=symbol,
+                company_name=info.get("longName") or info.get("shortName") or symbol,
+                current_price=current,
+                previous_close=previous,
+                price_change=change,
+                price_change_pct=change_pct,
+                market_cap=_safe_float(info.get("marketCap")),
+                pe_ratio=_safe_float(info.get("trailingPE") or info.get("forwardPE")),
+                volume=_safe_int(info.get("volume") or info.get("regularMarketVolume")),
+                week_52_high=_safe_float(info.get("fiftyTwoWeekHigh")),
+                week_52_low=_safe_float(info.get("fiftyTwoWeekLow")),
+                sector=info.get("sector"),
+                industry=info.get("industry"),
+                from_cache=False,
             )
 
         except Exception as e:
             logger.error("Failed to fetch stock data for %s: %s", symbol, str(e))
             # Graceful degradation — return minimal object rather than crashing
             data = StockData(
-                symbol       = symbol,
-                company_name = symbol,
-                from_cache   = False,
+                symbol=symbol,
+                company_name=symbol,
+                from_cache=False,
             )
 
     data.fetch_time_ms = t.elapsed_ms
@@ -116,7 +109,7 @@ def fetch_stock_data(symbol: str) -> StockData:
         "Stock data for %s fetched in %.1f ms (price=%.2f)",
         symbol,
         t.elapsed_ms,
-        data.current_price or 0,
+        data.current_price or 0.0,
     )
 
     # ── Cache write ────────────────────────────────────────────────────────

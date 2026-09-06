@@ -15,9 +15,9 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")          # newsapi.org free tier
 
 # ── Model Settings ───────────────────────────────────────────────────────────
-GROQ_MODEL          = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_MODEL          = os.getenv("GROQ_MODEL", "groq/compound-mini")
 FINBERT_MODEL       = "ProsusAI/finbert"               # financial domain BERT
-LLM_MAX_TOKENS      = 1024
+LLM_MAX_TOKENS      = 512
 LLM_TEMPERATURE     = 0.3                              # low = more factual
 
 # ── Cache Settings ───────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ CACHE_TTL_NEWS      = 30 * 60                          # 30 minutes
 MAX_CONCURRENT_REQUESTS = 10                           # asyncio Semaphore limit
 
 # ── Data Settings ────────────────────────────────────────────────────────────
-MAX_NEWS_ARTICLES   = 10
+MAX_NEWS_ARTICLES   = 5
 NEWS_LOOKBACK_DAYS  = 7
 
 # ── Logging ──────────────────────────────────────────────────────────────────

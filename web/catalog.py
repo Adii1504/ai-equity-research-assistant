@@ -1,37 +1,22 @@
 """
 web/catalog.py
-----------------
-Routes for:
-  GET /api/stocks     — curated stock catalog (for the Stocks page)
-  GET /api/funds      — mock mutual fund list (for the Mutual Funds page)
-  GET /api/recommend  — combined rule-based + history-based recommendations
-
-ADR: Recommendation scoring
-  Rule-based signals (always applied):
-    + recent price momentum (price_change_pct)
-    + reasonable valuation (P/E between 5 and 40)
-    - extreme/unavailable valuation
-  History-based signals (only if logged in, from search_history table):
-    + symbol previously searched directly
-    + sector previously searched (even if this exact symbol wasn't)
-
-  This keeps recommendations sane for anonymous users (pure rules) while
-  personalising for logged-in users without needing a heavy ML model.
+--------------
+Catalog & Recommendation endpoints:
+  GET /api/stocks     — Curated stock catalog
+  GET /api/funds      — Curated mutual fund list
+  GET /api/recommend  — Rule-based & interest-weighted stock recommendations
 """
 
+import asyncio
 from collections import Counter
 from typing import Optional, List, Dict
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from data.stocks_catalog import get_stock_catalog
-from data.funds_data import get_mock_funds
-from data.stock_data import fetch_stock_data
-from models.user_model import UserTable
-from models.search_model import SearchHistory
-from utils.db import get_db_optional
-from utils.logger import get_logger
+from data import get_stock_catalog, get_mock_funds, fetch_stock_data
+from models import UserTable, SearchHistory
+from utils import get_db_optional, get_logger
 from web.auth import get_current_user_optional
 
 logger = get_logger(__name__)
@@ -50,7 +35,7 @@ async def list_funds():
 
 def _rule_score(stock) -> float:
     if stock is None:
-        return -100.0  # unfetchable — push to the bottom, don't recommend blind
+        return -100.0  # unfetchable — push down
 
     score = 0.0
     if stock.price_change_pct is not None:
@@ -61,7 +46,6 @@ def _rule_score(stock) -> float:
             score += 5
         else:
             score -= 5
-    # missing P/E: neutral, no penalty — some sectors/stocks legitimately lack it
 
     return score
 
@@ -69,9 +53,9 @@ def _rule_score(stock) -> float:
 def _history_boost(symbol: str, sector: str, searched_symbols: Counter, searched_sectors: Counter) -> float:
     boost = 0.0
     if searched_symbols.get(symbol, 0) > 0:
-        boost += 10  # user has directly researched this exact stock before
+        boost += 10
     if searched_sectors.get(sector, 0) > 0:
-        boost += 5   # user has shown interest in this sector
+        boost += 5
     return boost
 
 
@@ -98,15 +82,22 @@ async def recommend(
             searched_symbols.update(h.symbol for h in history)
             searched_sectors.update(h.sector for h in history if h.sector)
 
-    results: List[Dict] = []
-    for item in catalog:
+    # Concurrently fetch stock data for all items in the catalog to speed up load time
+    async def fetch_item_data(item):
         symbol = item["symbol"]
-        sector = item["sector"]
         try:
-            stock = fetch_stock_data(symbol)
+            stock = await asyncio.to_thread(fetch_stock_data, symbol)
         except Exception as e:
             logger.warning("Recommend: fetch failed for %s: %s", symbol, str(e))
             stock = None
+        return item, stock
+
+    fetched_results = await asyncio.gather(*[fetch_item_data(item) for item in catalog])
+
+    results: List[Dict] = []
+    for item, stock in fetched_results:
+        symbol = item["symbol"]
+        sector = item["sector"]
 
         base = _rule_score(stock)
         boost = _history_boost(symbol, sector, searched_symbols, searched_sectors)

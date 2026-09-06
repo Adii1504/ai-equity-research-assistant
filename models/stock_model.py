@@ -12,9 +12,9 @@ ADR: Why dataclasses over dicts?
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 import json
+from typing import Optional, List
 
 
 @dataclass
@@ -88,7 +88,7 @@ class SentimentResult:
 @dataclass
 class ResearchReport:
     symbol:             str
-    generated_at:       str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    generated_at:       str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     stock:              Optional[StockData]      = None
     news:               Optional[NewsData]       = None
     sentiment:          Optional[SentimentResult]= None

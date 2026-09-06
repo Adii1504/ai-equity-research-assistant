@@ -239,6 +239,10 @@ function destroyCharts() {
 }
 
 function renderChart(canvasId, history) {
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js is not loaded on this page.");
+    return;
+  }
   const canvas = document.getElementById(canvasId);
   if (!canvas || !history.length) return;
 
@@ -564,7 +568,13 @@ function renderResults(reports, elapsed) {
 
 // ── Run Analysis ───────────────────────────────────────────────
 async function runAnalysis() {
-  if (!tickerInput || !analyseBtn) return;
+  if (!tickerInput || !analyseBtn) {
+    const raw = navSearchInput?.value?.trim();
+    if (raw) {
+      window.location.href = `/?ticker=${encodeURIComponent(raw)}`;
+    }
+    return;
+  }
   const raw = tickerInput.value.trim();
   if (!raw) {
     showToast("Enter a ticker above and click Analyse.", "info");
@@ -580,9 +590,17 @@ async function runAnalysis() {
 
   analyseBtn.disabled = true;
   analyseBtn.innerHTML = '<span class="spinner"></span>Analysing…';
-  showStatus(`Researching ${symbols.slice(0, 5).join(", ")}…`, "info");
+  showStatus(`⚡ Fetching data & news for ${symbols.slice(0, 5).join(", ")}…`, "info");
   showSkeleton();
   destroyCharts();
+
+  // Dynamic progress stage updates
+  const progressTimer1 = setTimeout(() => {
+    showStatus(`🔍 Running FinBERT sentiment & financial NLP analysis…`, "info");
+  }, 1200);
+  const progressTimer2 = setTimeout(() => {
+    showStatus(`🧠 Synthesizing AI research report with Groq LLM…`, "info");
+  }, 2600);
 
   const start = performance.now();
 
@@ -600,12 +618,14 @@ async function runAnalysis() {
     const data = await res.json();
     const elapsed = (performance.now() - start) / 1000;
     renderResults(data.reports, elapsed);
-    showToast(`Analysis complete for ${data.reports.map(r => r.symbol).join(", ")}`, "success");
+    showToast(`Analysis complete for ${data.reports.map(r => r.symbol).join(", ")} (${elapsed.toFixed(1)}s)`, "success");
   } catch (err) {
     showStatus(err.message || "Something went wrong. Check the server logs.", "error");
     showToast(err.message || "Analysis failed", "error");
     resultsEl.innerHTML = "";
   } finally {
+    clearTimeout(progressTimer1);
+    clearTimeout(progressTimer2);
     analyseBtn.disabled = false;
     analyseBtn.textContent = "Analyse →";
   }
@@ -671,11 +691,14 @@ function setLoggedInUI(email) {
 function logout() {
   localStorage.removeItem("financecla_token");
   localStorage.removeItem("financecla_user_email");
+  localStorage.removeItem("fingo_token");
+  localStorage.removeItem("fingo_user");
+  localStorage.removeItem("fingo_profile");
   window.location.href = "/";
 }
 
 openLoginBtn?.addEventListener("click", () => {
-  if (localStorage.getItem("financecla_token")) {
+  if (localStorage.getItem("financecla_token") || localStorage.getItem("fingo_token")) {
     window.location.href = "/profile";
   } else {
     openLogin();
@@ -686,7 +709,7 @@ closeLoginBtn?.addEventListener("click", closeLogin);
 loginModal?.addEventListener("click", e => { if (e.target === loginModal) closeLogin(); });
 
 // Restore session
-const savedUser = localStorage.getItem("financecla_user_email");
+const savedUser = localStorage.getItem("financecla_user_email") || (localStorage.getItem("fingo_user") ? JSON.parse(localStorage.getItem("fingo_user")).email : null);
 if (savedUser) setLoggedInUI(savedUser);
 
 // ── Auth Form ──────────────────────────────────────────────────
@@ -731,9 +754,14 @@ authForm?.addEventListener("submit", async e => {
 
     localStorage.setItem("financecla_token", data.token);
     localStorage.setItem("financecla_user_email", data.user.email);
+    localStorage.setItem("fingo_token", data.token);
+    localStorage.setItem("fingo_user", JSON.stringify(data.user));
     setLoggedInUI(data.user.email);
     closeLogin();
     showToast(`Welcome${authMode === "signup" ? " aboard" : " back"}, ${data.user.email.split("@")[0]}! 🎉`, "success");
+    if (currentPage === "profile") {
+      window.location.reload();
+    }
   } catch (err) {
     if (authError) { authError.textContent = err.message; authError.classList.remove("hidden"); }
   } finally {
@@ -894,10 +922,21 @@ async function loadProfilePage() {
     const profileEmail   = document.getElementById("profileEmail");
     const profileCreated = document.getElementById("profileCreated");
     const profileAvatar  = document.getElementById("profileAvatar");
+    const profileAmount  = document.getElementById("profileAmount");
+    const profileRegion  = document.getElementById("profileRegion");
+    const profileValidity = document.getElementById("profileValidity");
+
+    function formatRupees(amount) {
+      const num = Number(amount) || 0;
+      return `₹${num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
 
     if (profileEmail)   profileEmail.textContent = user.email;
     if (profileCreated) profileCreated.textContent = user.created_at ? new Date(user.created_at).toLocaleDateString() : "—";
     if (profileAvatar)  profileAvatar.textContent = user.email.charAt(0).toUpperCase();
+    if (profileAmount)  profileAmount.textContent = formatRupees(user.amount !== undefined ? user.amount : 0);
+    if (profileRegion)  profileRegion.textContent = user.region || "India (NSE/BSE)";
+    if (profileValidity) profileValidity.textContent = "Verified";
 
     status?.classList.add("hidden");
     card?.classList.remove("hidden");
@@ -919,6 +958,24 @@ async function loadProfilePage() {
           timeline.innerHTML = `<p class="history-empty">No research history yet. Analyse a stock to get started!</p>`;
         }
         historyCard?.classList.remove("hidden");
+        
+        // Mock Investment History
+        const invCard = document.getElementById("investmentHistoryCard");
+        const invTimeline = document.getElementById("investmentTimeline");
+        if (invTimeline) {
+          const mockInvestments = [
+            { symbol: "AAPL", type: "Buy", shares: 10, price: "$150.20", date: new Date(Date.now() - 86400000 * 2) },
+            { symbol: "MSFT", type: "Buy", shares: 5, price: "$410.00", date: new Date(Date.now() - 86400000 * 5) },
+            { symbol: "TSLA", type: "Sell", shares: 2, price: "$220.50", date: new Date(Date.now() - 86400000 * 12) }
+          ];
+          invTimeline.innerHTML = mockInvestments.map(inv => `
+            <div class="history-item" style="cursor: default;">
+              <span class="history-symbol">${inv.symbol} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(${inv.type})</span></span>
+              <span class="history-sector">${inv.shares} shares @ ${inv.price}</span>
+              <span class="history-time">${inv.date.toLocaleDateString()}</span>
+            </div>`).join("");
+        }
+        invCard?.classList.remove("hidden");
       }
     } catch {}
   } catch (err) {
@@ -932,4 +989,4 @@ document.getElementById("logoutBtn")?.addEventListener("click", logout);
 if (currentPage === "stocks")    loadStocksPage();
 if (currentPage === "funds")     loadFundsPage();
 if (currentPage === "recommend") loadRecommendPage();
-if (currentPage === "profile")   loadProfilePage();
+if (currentPage === "profile" && !window.__PROFILE_JS_ACTIVE) loadProfilePage();

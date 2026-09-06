@@ -280,27 +280,20 @@ img { max-width: 100%; display: block; }
   flex-shrink: 0;
 }
 
-.logo-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #818cf8 0%, #10b981 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 18px rgba(16, 185, 129, 0.35);
-  position: relative;
+.logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: contain;
   transition: var(--transition);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px;
 }
 
-.logo:hover .logo-icon {
-  transform: rotate(-8deg) scale(1.08);
-  box-shadow: 0 0 28px rgba(16, 185, 129, 0.5);
-}
-
-.logo-icon::after {
-  content: "⚡";
-  font-size: 15px;
+.logo:hover .logo-img {
+  transform: scale(1.08) rotate(-4deg);
+  border-color: var(--brand);
 }
 
 .logo-text {
@@ -360,6 +353,7 @@ img { max-width: 100%; display: block; }
   transform: translateX(-50%);
   background: var(--surface-card);
   backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-hover);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -505,6 +499,7 @@ img { max-width: 100%; display: block; }
   left: 0; right: 0;
   background: var(--surface-card);
   backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-hover);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
@@ -724,17 +719,74 @@ img { max-width: 100%; display: block; }
 .ticker-item.up em    { color: var(--positive); background: var(--positive-bg); }
 .ticker-item.down em  { color: var(--negative); background: var(--negative-bg); }
 
+/* ── Main Page Background Backdrop ────────────────────────── */
+body[data-page="home"] {
+  position: relative;
+}
+
+body[data-page="home"]::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('/hero-banner.jpg') no-repeat center 20% / cover;
+  opacity: 0.25;
+  z-index: -1;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  filter: saturate(1.3) contrast(1.1);
+  transition: opacity 0.4s ease;
+}
+
+[data-theme="light"] body[data-page="home"]::before {
+  opacity: 0.08;
+  mix-blend-mode: multiply;
+  filter: saturate(1.1);
+}
+
 /* ── Hero Section ───────────────────────────────────────────── */
 .hero {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 4rem 1.5rem 3rem;
+  max-width: 1100px;
+  margin: 3rem auto;
+  padding: 6rem 1.5rem 5rem;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
   overflow: hidden;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-hover);
+  background: rgba(10, 15, 28, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-lg), 0 0 35px -5px rgba(16, 185, 129, 0.18);
+}
+
+[data-theme="light"] .hero {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+/* Background Banner Image */
+.hero-banner-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('/hero-banner.jpg') no-repeat center center;
+  background-size: cover;
+  opacity: 0.80;
+  z-index: 0;
+  mix-blend-mode: screen;
+  filter: saturate(1.4) brightness(1.1);
+  mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, rgba(0,0,0,0.15) 90%);
+  -webkit-mask-image: radial-gradient(ellipse at center, rgba(0,0,0,1) 40%, rgba(0,0,0,0.15) 90%);
+}
+
+[data-theme="light"] .hero-banner-bg {
+  mix-blend-mode: multiply;
+  opacity: 0.22;
+  filter: saturate(1.2);
 }
 
 /* Floating ambient shapes */
@@ -747,6 +799,7 @@ img { max-width: 100%; display: block; }
   opacity: 0.35;
   pointer-events: none;
   animation: breathe 8s ease-in-out infinite;
+  z-index: 0;
 }
 
 .hero::before {
@@ -782,6 +835,8 @@ img { max-width: 100%; display: block; }
   animation: fadeInUp 0.5s var(--ease-out), pulse-glow 4s ease-in-out infinite;
   position: relative;
   z-index: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .hero-pill .pill-dot {
@@ -799,6 +854,26 @@ img { max-width: 100%; display: block; }
   font-weight: 500;
   margin-bottom: 0.5rem;
   animation: fadeInUp 0.5s var(--ease-out) 0.1s both;
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1 {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-sub {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-search-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+.quick-chips-wrap {
   position: relative;
   z-index: 1;
 }
@@ -1855,23 +1930,79 @@ img { max-width: 100%; display: block; }
   color: var(--text);
 }
 
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 14px var(--brand-glow);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--brand-glow);
+  filter: brightness(1.1);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
 .btn-secondary {
-  background: var(--surface);
+  background: var(--surface-subtle);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 0.6rem 1.15rem;
+  padding: 0.65rem 1.15rem;
   border-radius: var(--radius);
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
   text-align: center;
   font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-secondary:hover {
-  background: var(--negative-bg);
-  border-color: var(--negative-border);
-  color: var(--negative);
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.chip, .quick-fund-btn {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+}
+
+.chip:hover, .quick-fund-btn:hover {
+  background: var(--brand-light);
+  border-color: var(--positive-border);
+  color: var(--positive);
+  transform: translateY(-1px);
+}
+
+.quick-fund-btn:active {
+  transform: scale(0.96);
 }
 
 /* History Timeline */

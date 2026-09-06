@@ -1,102 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FinanceCLA — AI Equity Research Assistant</title>
-  <meta name="description" content="AI-powered equity research — live fundamentals, news sentiment analysis, and LLM-generated research notes for US and Indian markets." />
+  <title>Fingo — AI Equity Research Assistant</title>
+  <meta name="description"
+    content="AI-powered equity research — live fundamentals, news sentiment analysis, and LLM-generated research notes for US and Indian markets." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
+
 <body data-page="home">
 
   <!-- ── Navbar ─────────────────────────────────────────────── -->
   <nav class="navbar" id="navbar">
     <div class="nav-inner">
       <a href="/" class="logo">
-        <span class="logo-icon" aria-hidden="true"></span>
-        <span class="logo-text">FinanceCLA</span>
+        <img src="/logo.png" class="logo-img" alt="Logo" />
+        <span class="logo-text">Fingo</span>
       </a>
 
       <ul class="nav-links" id="navLinks">
-        <li class="nav-item has-dropdown">
-          <button type="button" class="nav-link" data-dropdown="stocks">Stocks</button>
-          <div class="mega-menu" id="dropdown-stocks">
-            <div class="mega-col mega-feature">
-              <div class="mega-illustration stocks-illo" aria-hidden="true"></div>
-              <a href="/stocks" style="text-decoration:none; color:inherit;">
-                <h3>Invest in Stocks <span class="arrow">→</span></h3>
-              </a>
-              <p>Research stocks with live fundamentals, news sentiment, and AI-generated research notes.</p>
-            </div>
-            <div class="mega-col">
-              <a href="#" class="mega-link" data-ticker="AAPL">
-                <strong>Intraday</strong>
-                <span>Monitor top intraday performers in real time</span>
-              </a>
-              <a href="#" class="mega-link" data-ticker="MSFT">
-                <strong>ETF Screener</strong>
-                <span>Get the best of Mutual Funds and flexibility of Stocks</span>
-              </a>
-              <a href="#" class="mega-link" data-ticker="TSLA">
-                <strong>IPO</strong>
-                <span>Track upcoming and ongoing IPOs</span>
-              </a>
-              <a href="#" class="mega-link" data-ticker="NVDA">
-                <strong>MTFs</strong>
-                <span>Buy now, pay later</span>
-              </a>
-            </div>
-            <div class="mega-col">
-              <a href="#" class="mega-link" data-ticker="GOOGL">
-                <strong>Stock Screener</strong>
-                <span>Filter based on RSI, PE ratio and more</span>
-              </a>
-              <a href="#" class="mega-link" data-ticker="AMZN">
-                <strong>Stock Events</strong>
-                <span>Dividends, bonus, buybacks and more</span>
-              </a>
-              <a href="#" class="mega-link" data-ticker="META">
-                <strong>Demat Account</strong>
-                <span>Begin your stock market journey</span>
-              </a>
-              <a href="#" class="mega-link" data-ticker="NFLX">
-                <strong>Share Market Today</strong>
-                <span>Live news updates from stock market</span>
-              </a>
-            </div>
-          </div>
-        </li>
-        <li class="nav-item"><a href="#" class="nav-link">F&amp;O</a></li>
+        <li class="nav-item"><a href="/stocks" class="nav-link">Stocks</a></li>
         <li class="nav-item"><a href="/mutual-funds" class="nav-link">Mutual Funds</a></li>
         <li class="nav-item"><a href="/recommend" class="nav-link">Recommendations</a></li>
-        <li class="nav-item has-dropdown">
-          <button type="button" class="nav-link" data-dropdown="more">More</button>
-          <div class="mega-menu mega-menu-sm" id="dropdown-more">
-            <div class="mega-col">
-              <a href="#" class="mega-link" data-ticker="TCS.NS">
-                <strong>Indian Markets</strong>
-                <span>Analyse NSE &amp; BSE tickers like TCS.NS</span>
-              </a>
-              <a href="#" class="mega-link" data-ticker="RELIANCE.NS">
-                <strong>Sector Analysis</strong>
-                <span>Deep dive into sector trends</span>
-              </a>
-              <a href="#" class="mega-link" data-ticker="INFY.NS">
-                <strong>AI Research</strong>
-                <span>LLM-powered equity research notes</span>
-              </a>
-            </div>
-          </div>
-        </li>
       </ul>
 
       <div class="nav-search" id="navSearchWrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="navSearchInput" type="text" placeholder="Search stocks… e.g. AAPL" autocomplete="off" />
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input id="navSearchInput" type="text" placeholder="Search" autocomplete="off" />
         <kbd>⌘K</kbd>
         <div class="search-dropdown" id="navSearchDropdown"></div>
       </div>
@@ -128,6 +70,9 @@
 
   <!-- ── Hero Section ───────────────────────────────────────── -->
   <section class="hero" id="heroSection">
+    <!-- Hero Banner Background -->
+    <div class="hero-banner-bg"></div>
+
     <div class="hero-pill">
       <span class="pill-dot"></span>
       AI-Powered Research
@@ -144,13 +89,13 @@
 
     <div class="hero-search-wrap">
       <div class="hero-search" id="heroSearch">
-        <svg class="search-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input
-          id="tickerInput"
-          type="text"
-          placeholder="AAPL, MSFT, TCS.NS — separate multiple with commas"
-          autocomplete="off"
-        />
+        <svg class="search-input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input id="tickerInput" type="text" placeholder="AAPL, MSFT, TCS.NS — separate multiple with commas"
+          autocomplete="off" />
         <button id="analyseBtn" type="button" class="btn-analyse">Analyse →</button>
       </div>
     </div>
@@ -179,23 +124,7 @@
       </button>
     </div>
 
-    <div class="pillars-grid">
-      <div class="pillar-card">
-        <div class="pillar-icon">📊</div>
-        <h3>Live Market Data</h3>
-        <p>Real-time fundamentals — price, market cap, P/E, 52-week range — all from Yahoo Finance.</p>
-      </div>
-      <div class="pillar-card">
-        <div class="pillar-icon">🧠</div>
-        <h3>AI Research Notes</h3>
-        <p>Structured summary, positives, risks &amp; outlook generated by Groq's Llama 3 — powered by FinBERT sentiment.</p>
-      </div>
-      <div class="pillar-card">
-        <div class="pillar-icon">⚡</div>
-        <h3>Blazing Fast</h3>
-        <p>Concurrent pipeline with Redis caching — analyse 5 tickers simultaneously in under 4 seconds.</p>
-      </div>
-    </div>
+
   </section>
 
   <!-- ── Main Content ───────────────────────────────────────── -->
@@ -209,8 +138,8 @@
     <div class="footer-inner">
       <div class="footer-left">
         <div class="footer-brand">
-          <span class="logo-icon" aria-hidden="true"></span>
-          FinanceCLA
+          <img src="/logo.png" class="logo-img" alt="Logo" />
+          Fingo
         </div>
         <span class="footer-tagline">Your AI equity research co-pilot</span>
       </div>
@@ -221,7 +150,7 @@
         <a href="/profile" class="footer-link">Profile</a>
       </div>
     </div>
-    <p class="footer-disclaimer">For research and demo purposes only — not financial advice. Built with ❤️ and AI.</p>
+    <p class="footer-disclaimer"></p>
   </footer>
 
   <!-- ── Login Modal ────────────────────────────────────────── -->
@@ -239,7 +168,7 @@
           <button type="button" class="auth-toggle-btn active" id="loginTabBtn">Log In</button>
           <button type="button" class="auth-toggle-btn" id="signupTabBtn">Sign Up</button>
         </div>
-        <h2 id="loginTitle">Welcome to FinanceCLA</h2>
+        <h2 id="loginTitle">welcome to fingo</h2>
 
         <p id="authError" class="auth-error hidden"></p>
 
@@ -255,7 +184,9 @@
           <button type="submit" class="btn-primary btn-full" id="authSubmitBtn">Log In</button>
         </form>
 
-        <p class="modal-legal">By proceeding, I agree to <a href="#">T&amp;C</a>, <a href="#">Privacy Policy</a> &amp; <a href="#">Tariff Rates</a></p>
+        <p class="modal-legal">By proceeding, I agree to <a href="#">T&amp;C</a>, <a href="#">Privacy Policy</a> &amp;
+          <a href="#">Tariff Rates</a>
+        </p>
       </div>
     </div>
   </div>
@@ -265,4 +196,5 @@
 
   <script src="app.js"></script>
 </body>
+
 </html>

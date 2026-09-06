@@ -7,7 +7,7 @@ sectors/symbols the user has shown interest in.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 
@@ -21,7 +21,7 @@ class SearchHistory(Base):
     user_id     = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     symbol      = Column(String, nullable=False)
     sector      = Column(String, nullable=True)
-    searched_at = Column(DateTime, default=datetime.utcnow)
+    searched_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 @dataclass

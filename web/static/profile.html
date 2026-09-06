@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,35 +8,52 @@
   <meta name="description" content="Manage your FinanceCLA account and view your research history." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
+
 <body data-page="profile">
 
-  <nav class="navbar">
+  <nav class="navbar" id="navbar">
     <div class="nav-inner">
-      <a href="/" class="logo"><span class="logo-icon" aria-hidden="true"></span><span class="logo-text">FinanceCLA</span></a>
+      <a href="/" class="logo">
+        <img src="/logo.png" class="logo-img" alt="Logo" />
+        <span class="logo-text">Fingo</span>
+      </a>
+
       <ul class="nav-links" id="navLinks">
         <li class="nav-item"><a href="/stocks" class="nav-link">Stocks</a></li>
         <li class="nav-item"><a href="/mutual-funds" class="nav-link">Mutual Funds</a></li>
         <li class="nav-item"><a href="/recommend" class="nav-link">Recommendations</a></li>
       </ul>
+
       <div class="nav-search" id="navSearchWrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="navSearchInput" type="text" placeholder="Search stocks…" autocomplete="off" />
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input id="navSearchInput" type="text" placeholder="Search " autocomplete="off" />
         <kbd>⌘K</kbd>
+        <div class="search-dropdown" id="navSearchDropdown"></div>
       </div>
+
       <div class="nav-right">
         <button type="button" class="btn-theme-toggle" id="themeToggleBtn" aria-label="Toggle theme">🌙</button>
         <button type="button" class="btn-login" id="openLoginBtn">Login / Sign up</button>
       </div>
-      <button type="button" class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+
+      <button type="button" class="hamburger" id="hamburgerBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
 
   <section class="page-hero">
     <h1>Your Profile</h1>
-    <p>Manage your FinanceCLA account and review your research history.</p>
+    <p>Manage your Fingo account </p>
   </section>
 
   <div class="page-content">
@@ -50,14 +68,101 @@
           <strong id="profileEmail">—</strong>
         </div>
         <div class="profile-field">
+          <span>Amount in Account</span>
+          <strong id="profileAmount">—</strong>
+        </div>
+        <div class="profile-field">
+          <span>Region</span>
+          <strong id="profileRegion">—</strong>
+        </div>
+        <div class="profile-field">
+          <span>Validity Proof</span>
+          <strong id="profileValidity">—</strong>
+        </div>
+        <div class="profile-field">
           <span>Member since</span>
           <strong id="profileCreated">—</strong>
         </div>
         <button type="button" class="btn-secondary" id="logoutBtn">Log out</button>
       </div>
 
-      <!-- History Card -->
-      <div class="history-card hidden" id="historyCard">
+      <!-- Investment History Card -->
+      <div class="history-card hidden" id="investmentHistoryCard" style="margin-top: 2rem;">
+        <h3>💰 Investment History</h3>
+        <div class="history-timeline" id="investmentTimeline">
+          <p class="history-empty">Loading history…</p>
+        </div>
+      </div>
+
+      <!-- Account Actions Grid -->
+      <div class="profile-actions-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+        <!-- Add Funds Card -->
+        <div class="history-card" id="fundsManagementCard" style="margin-top: 0;">
+          <h3> Manage Account Balance (INR)</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Deposit funds
+          </p>
+
+          <form id="fundsForm" style="display: flex; flex-direction: column; gap: 0.85rem;">
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button type="button" class="chip quick-fund-btn" data-val="5000">+ ₹5,000</button>
+              <button type="button" class="chip quick-fund-btn" data-val="10000">+ ₹10,000</button>
+              <button type="button" class="chip quick-fund-btn" data-val="50000">+ ₹50,000</button>
+              <button type="button" class="chip quick-fund-btn" data-val="100000">+ ₹1,00,000</button>
+            </div>
+
+            <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+              <div style="position: relative; flex: 1; min-width: 160px;">
+                <span
+                  style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--brand); font-weight: 700; font-size: 1.1rem;">₹</span>
+                <input type="number" id="fundAmountInput" min="1" step="any" placeholder="Enter amount in ₹..." required
+                  style="width: 100%; padding: 0.65rem 0.85rem 0.65rem 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text);" />
+              </div>
+              <button type="submit" id="addFundsBtn" class="btn-primary"
+                style="padding: 0.65rem 1.25rem; font-size: 0.88rem; white-space: nowrap; cursor: pointer;">
+                + Add ₹ Funds
+              </button>
+              <button type="button" id="setBalanceBtn" class="btn-secondary"
+                style="padding: 0.65rem 1rem; font-size: 0.85rem; white-space: nowrap; cursor: pointer;">
+                Set Balance
+              </button>
+            </div>
+            <p id="fundsStatusMsg" class="hidden" style="font-size: 0.85rem; margin-top: 0.25rem;"></p>
+          </form>
+        </div>
+
+        <!-- Region Management Card -->
+        <div class="history-card" id="regionManagementCard" style="margin-top: 0;">
+          <h3>🌍 Operating Region</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Update your preferred market / investment region .
+          </p>
+
+          <form id="regionForm" style="display: flex; flex-direction: column; gap: 0.85rem;">
+            <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+              <select id="regionSelect"
+                style="flex: 1; min-width: 170px; padding: 0.65rem 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); cursor: pointer;">
+                <option value="India (NSE/BSE)">India (NSE / BSE)</option>
+                <option value="United States (NYSE/NASDAQ)">United States (NYSE / NASDAQ)</option>
+                <option value="Global (Multi-Asset)">Global (Multi-Asset)</option>
+                <option value="Europe (LSE/Euronext)">Europe (LSE / Euronext)</option>
+                <option value="Asia-Pacific (SGX/HKEX)">Asia-Pacific (SGX / HKEX)</option>
+              </select>
+              <button type="submit" id="saveRegionBtn" class="btn-primary"
+                style="padding: 0.65rem 1.25rem; font-size: 0.88rem; white-space: nowrap; cursor: pointer;">
+                Save Region
+              </button>
+            </div>
+            <input type="text" id="customRegionInput" placeholder="Or type custom region name..."
+              style="width: 100%; padding: 0.65rem 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text);" />
+            <p id="regionStatusMsg" class="hidden" style="font-size: 0.85rem; margin-top: 0.25rem;"></p>
+          </form>
+        </div>
+      </div>
+
+      <!-- Research History Card -->
+      <div class="history-card hidden" id="historyCard" style="margin-top: 2rem;">
         <h3>🕐 Research History</h3>
         <div class="history-timeline" id="historyTimeline">
           <p class="history-empty">Loading history…</p>
@@ -69,44 +174,57 @@
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-left">
-        <div class="footer-brand"><span class="logo-icon" aria-hidden="true"></span> FinanceCLA</div>
+        <div class="footer-brand">
+          <img src="/logo.png" class="logo-img" alt="Logo" />
+          Fingo
+        </div>
         <span class="footer-tagline">Your AI equity research co-pilot</span>
       </div>
       <div class="footer-right">
-        <a href="/" class="footer-link">Home</a>
         <a href="/stocks" class="footer-link">Stocks</a>
         <a href="/mutual-funds" class="footer-link">Mutual Funds</a>
+        <a href="/recommend" class="footer-link">Recommendations</a>
+        <a href="/profile" class="footer-link">Profile</a>
       </div>
     </div>
-    <p class="footer-disclaimer">For research and demo purposes only — not financial advice.</p>
+    <p class="footer-disclaimer"></p>
   </footer>
 
   <!-- Login Modal -->
-  <div class="modal-overlay hidden" id="loginModal" role="dialog" aria-modal="true">
+  <div class="modal-overlay hidden" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
     <div class="modal">
       <button type="button" class="modal-close" id="closeLoginBtn" aria-label="Close">&times;</button>
       <div class="modal-left">
         <h2>Simple, Free<br />Investing.</h2>
-        <div class="modal-left-footer"><span class="modal-badge">💰</span> AI-Powered Research</div>
+        <div class="modal-left-footer">
+          <span class="modal-badge"></span> AI-Powered Research
+        </div>
       </div>
       <div class="modal-right">
         <div class="auth-toggle">
           <button type="button" class="auth-toggle-btn active" id="loginTabBtn">Log In</button>
           <button type="button" class="auth-toggle-btn" id="signupTabBtn">Sign Up</button>
         </div>
-        <h2>Welcome to FinanceCLA</h2>
+        <h2>Welcome to Fingo</h2>
         <p id="authError" class="auth-error hidden"></p>
         <form id="authForm">
-          <label class="modal-field"><span>Email</span><input type="email" id="authEmail" placeholder="you@example.com" required /></label>
-          <label class="modal-field" style="margin-top:0.85rem;"><span>Password</span><input type="password" id="authPassword" placeholder="At least 8 characters" minlength="8" required /></label>
+          <label class="modal-field"><span>Email</span><input type="email" id="authEmail" placeholder="you@example.com"
+              required /></label>
+          <label class="modal-field" style="margin-top:0.85rem;"><span>Password</span><input type="password"
+              id="authPassword" placeholder="At least 8 characters" minlength="8" required /></label>
           <button type="submit" class="btn-primary btn-full" id="authSubmitBtn">Log In</button>
         </form>
-        <p class="modal-legal">By proceeding, I agree to <a href="#">T&amp;C</a>, <a href="#">Privacy Policy</a> &amp; <a href="#">Tariff Rates</a></p>
+        <p class="modal-legal">By proceeding, I agree to <a href="#">T&amp;C</a>, <a href="#">Privacy Policy</a> &amp;
+          <a href="#">Tariff Rates</a>
+        </p>
       </div>
     </div>
   </div>
 
   <div class="toast-container" id="toastContainer"></div>
+  <script src="/helpers.js"></script>
+  <script src="/profile.js"></script>
   <script src="/app.js"></script>
 </body>
+
 </html>

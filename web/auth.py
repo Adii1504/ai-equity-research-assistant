@@ -1,33 +1,22 @@
 """
 web/auth.py
 -----------
-Signup / login / profile routes.
-
-Mounted into web/server.py via:
-    from web.auth import router as auth_router
-    app.include_router(auth_router, prefix="/api/auth")
-
-Passwords are hashed with bcrypt. Issues a JWT on login/signup —
-frontend stores it and sends it as 'Authorization: Bearer <token>'
-on future requests. get_current_user / get_current_user_optional
-are reusable dependencies other routers (recommend, research logging)
-can import to identify the logged-in user.
+Signup / login / profile / account funds & region routes.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Header
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from config import JWT_SECRET, JWT_EXPIRE_MINUTES
-from models.user_model import User, UserTable
+from models import User, UserTable, SearchHistory
 from utils import db as db_module
-from utils.db import get_db, get_db_optional
-from utils.logger import get_logger
+from utils import get_db, get_db_optional, get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -49,11 +38,29 @@ def _verify_password(plain_password: str, hashed_password: str) -> bool:
 class SignupRequest(BaseModel):
     email: EmailStr
     password: str
+    region: Optional[str] = "India"
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+
+class AmountRequest(BaseModel):
+    amount: float = Field(..., ge=0, description="Amount in Rupees (₹)")
+
+
+class AddFundsRequest(BaseModel):
+    amount: float = Field(..., gt=0, description="Amount to deposit in Rupees (₹)")
+
+
+class RegionRequest(BaseModel):
+    region: str = Field(..., min_length=1, max_length=100, description="User operating region / country")
+
+
+class ProfileUpdateRequest(BaseModel):
+    amount: Optional[float] = Field(None, ge=0)
+    region: Optional[str] = Field(None, max_length=100)
 
 
 class AuthResponse(BaseModel):
@@ -64,7 +71,7 @@ class AuthResponse(BaseModel):
 def _make_token(user_id: int) -> str:
     payload = {
         "sub": str(user_id),
-        "exp": datetime.utcnow() + timedelta(minutes=JWT_EXPIRE_MINUTES),
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
@@ -114,12 +121,17 @@ async def signup(body: SignupRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed = _hash_password(body.password)
-    row = UserTable(email=body.email, hashed_password=hashed)
+    row = UserTable(
+        email=body.email,
+        hashed_password=hashed,
+        amount=0.0,
+        region=body.region or "India",
+    )
     db.add(row)
     db.commit()
     db.refresh(row)
 
-    logger.info("New user signed up: %s", body.email)
+    logger.info("New user signed up: %s (Region: %s)", body.email, row.region)
     user = User.from_orm(row)
     return AuthResponse(token=_make_token(row.id), user=user.__dict__)
 
@@ -142,12 +154,89 @@ async def me(current_user: UserTable = Depends(get_current_user)):
     return User.from_orm(current_user).__dict__
 
 
+@router.post("/region")
+@router.put("/region")
+async def update_region(
+    body: RegionRequest,
+    current_user: UserTable = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update the user's region in their PostgreSQL database record."""
+    current_user.region = body.region.strip()
+    db.commit()
+    db.refresh(current_user)
+    logger.info("Updated region for %s to '%s'", current_user.email, current_user.region)
+    return {
+        "status": "ok",
+        "region": current_user.region,
+        "user": User.from_orm(current_user).__dict__,
+    }
+
+
+@router.post("/amount")
+@router.put("/amount")
+async def set_amount(
+    body: AmountRequest,
+    current_user: UserTable = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Set the total amount/balance in Rupees (₹) in the user's PostgreSQL record."""
+    current_user.amount = round(body.amount, 2)
+    db.commit()
+    db.refresh(current_user)
+    logger.info("Updated balance for %s to ₹%.2f", current_user.email, current_user.amount)
+    return {
+        "status": "ok",
+        "amount": current_user.amount,
+        "user": User.from_orm(current_user).__dict__,
+    }
+
+
+@router.post("/add-funds")
+async def add_funds(
+    body: AddFundsRequest,
+    current_user: UserTable = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Deposit additional funds in Rupees (₹) into the user's database record."""
+    current = float(current_user.amount or 0.0)
+    current_user.amount = round(current + body.amount, 2)
+    db.commit()
+    db.refresh(current_user)
+    logger.info("Added ₹%.2f to %s balance (new total: ₹%.2f)", body.amount, current_user.email, current_user.amount)
+    return {
+        "status": "ok",
+        "deposited": body.amount,
+        "amount": current_user.amount,
+        "user": User.from_orm(current_user).__dict__,
+    }
+
+
+@router.put("/profile")
+async def update_profile(
+    body: ProfileUpdateRequest,
+    current_user: UserTable = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update profile fields (amount, region) in PostgreSQL database."""
+    if body.amount is not None:
+        current_user.amount = round(body.amount, 2)
+    if body.region is not None:
+        current_user.region = body.region.strip()
+
+    db.commit()
+    db.refresh(current_user)
+    return {
+        "status": "ok",
+        "user": User.from_orm(current_user).__dict__,
+    }
+
+
 @router.get("/history")
 async def get_history(
     current_user: UserTable = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    from models.search_model import SearchHistory
     records = (
         db.query(SearchHistory)
         .filter(SearchHistory.user_id == current_user.id)

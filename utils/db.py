@@ -23,7 +23,7 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True) if DATABASE_URL else None
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"connect_timeout": 3}) if DATABASE_URL else None
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) if engine else None
 db_available = bool(engine)
 
@@ -81,12 +81,23 @@ def init_db():
 
     try:
         if engine is None or str(engine.url) != db_url:
-            engine = create_engine(db_url, pool_pre_ping=True)
+            engine = create_engine(db_url, pool_pre_ping=True, connect_args={"connect_timeout": 3})
             SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
         Base.metadata.create_all(bind=engine)
+        
+        # Auto-migrate any newly added columns if table already existed
+        from sqlalchemy import text
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS amount DOUBLE PRECISION DEFAULT 0.0;"))
+                conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS region VARCHAR DEFAULT 'India';"))
+                conn.commit()
+        except Exception as mig_err:
+            logger.debug("Column migration note: %s", mig_err)
+
         db_available = True
-        logger.info("Postgres tables verified/created")
+        logger.info("Postgres tables and columns verified/migrated")
     except Exception as exc:
         db_available = False
         logger.warning(

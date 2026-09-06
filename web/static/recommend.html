@@ -1,35 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recommendations — FinanceCLA</title>
+  <title>Recommendations — Fingo</title>
   <meta name="description" content="AI-powered stock recommendations based on rules and your research history." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
+
 <body data-page="recommend">
 
-  <nav class="navbar">
+  <nav class="navbar" id="navbar">
     <div class="nav-inner">
-      <a href="/" class="logo"><span class="logo-icon" aria-hidden="true"></span><span class="logo-text">FinanceCLA</span></a>
+      <a href="/" class="logo">
+        <img src="/logo.png" class="logo-img" alt="Logo" />
+        <span class="logo-text">Fingo</span>
+      </a>
+
       <ul class="nav-links" id="navLinks">
         <li class="nav-item"><a href="/stocks" class="nav-link">Stocks</a></li>
         <li class="nav-item"><a href="/mutual-funds" class="nav-link">Mutual Funds</a></li>
-        <li class="nav-item"><a href="/recommend" class="nav-link active">Recommendations</a></li>
+        <li class="nav-item"><a href="/recommend" class="nav-link">Recommendations</a></li>
+
       </ul>
+
       <div class="nav-search" id="navSearchWrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        <input id="navSearchInput" type="text" placeholder="Search stocks…" autocomplete="off" />
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input id="navSearchInput" type="text" placeholder="Search " autocomplete="off" />
         <kbd>⌘K</kbd>
+        <div class="search-dropdown" id="navSearchDropdown"></div>
       </div>
+
       <div class="nav-right">
         <button type="button" class="btn-theme-toggle" id="themeToggleBtn" aria-label="Toggle theme">🌙</button>
         <button type="button" class="btn-login" id="openLoginBtn">Login / Sign up</button>
       </div>
-      <button type="button" class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+
+      <button type="button" class="hamburger" id="hamburgerBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
 
@@ -47,39 +66,49 @@
   <footer class="footer">
     <div class="footer-inner">
       <div class="footer-left">
-        <div class="footer-brand"><span class="logo-icon" aria-hidden="true"></span> FinanceCLA</div>
+        <div class="footer-brand">
+          <img src="/logo.png" class="logo-img" alt="Logo" />
+          Fingo
+        </div>
         <span class="footer-tagline">Your AI equity research co-pilot</span>
       </div>
       <div class="footer-right">
-        <a href="/" class="footer-link">Home</a>
         <a href="/stocks" class="footer-link">Stocks</a>
         <a href="/mutual-funds" class="footer-link">Mutual Funds</a>
+        <a href="/recommend" class="footer-link">Recommendations</a>
+        <a href="/profile" class="footer-link">Profile</a>
       </div>
     </div>
-    <p class="footer-disclaimer">For research and demo purposes only — not financial advice.</p>
+    <p class="footer-disclaimer"></p>
   </footer>
 
   <!-- Login Modal -->
-  <div class="modal-overlay hidden" id="loginModal" role="dialog" aria-modal="true">
+  <div class="modal-overlay hidden" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
     <div class="modal">
       <button type="button" class="modal-close" id="closeLoginBtn" aria-label="Close">&times;</button>
       <div class="modal-left">
         <h2>Simple, Free<br />Investing.</h2>
-        <div class="modal-left-footer"><span class="modal-badge">💰</span> AI-Powered Research</div>
+        <div class="modal-left-footer">
+          <span class="modal-badge">💰</span> AI-Powered Research
+        </div>
       </div>
       <div class="modal-right">
         <div class="auth-toggle">
           <button type="button" class="auth-toggle-btn active" id="loginTabBtn">Log In</button>
           <button type="button" class="auth-toggle-btn" id="signupTabBtn">Sign Up</button>
         </div>
-        <h2>Welcome to FinanceCLA</h2>
+        <h2>Welcome to Fingo</h2>
         <p id="authError" class="auth-error hidden"></p>
         <form id="authForm">
-          <label class="modal-field"><span>Email</span><input type="email" id="authEmail" placeholder="you@example.com" required /></label>
-          <label class="modal-field" style="margin-top:0.85rem;"><span>Password</span><input type="password" id="authPassword" placeholder="At least 8 characters" minlength="8" required /></label>
+          <label class="modal-field"><span>Email</span><input type="email" id="authEmail" placeholder="you@example.com"
+              required /></label>
+          <label class="modal-field" style="margin-top:0.85rem;"><span>Password</span><input type="password"
+              id="authPassword" placeholder="At least 8 characters" minlength="8" required /></label>
           <button type="submit" class="btn-primary btn-full" id="authSubmitBtn">Log In</button>
         </form>
-        <p class="modal-legal">By proceeding, I agree to <a href="#">T&amp;C</a>, <a href="#">Privacy Policy</a> &amp; <a href="#">Tariff Rates</a></p>
+        <p class="modal-legal">By proceeding, I agree to <a href="#">T&amp;C</a>, <a href="#">Privacy Policy</a> &amp;
+          <a href="#">Tariff Rates</a>
+        </p>
       </div>
     </div>
   </div>
@@ -87,4 +116,5 @@
   <div class="toast-container" id="toastContainer"></div>
   <script src="/app.js"></script>
 </body>
+
 </html>
