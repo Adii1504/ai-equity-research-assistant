@@ -244,13 +244,7 @@ Typical cold-cache latency (single ticker):
 
 With Redis cache hits, stock + news return in ~180 ms. Multi-ticker requests run concurrently (bounded by `MAX_CONCURRENT_REQUESTS = 10`).
 
-## Limitations
-
-- Not financial advice — for research and demo purposes only.
-- Yahoo Finance and NewsAPI rate limits apply; caching reduces repeat calls.
-- LLM output depends on available data; missing news or API keys produce partial reports.
-- FinBERT requires sufficient RAM/CPU; first inference is slower while the model loads.
 
 ## License
 
-MIT (or your chosen license — update as needed.)
+MIT 
